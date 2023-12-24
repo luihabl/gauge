@@ -1,2 +1,2 @@
 # gauge
-⚖️ Measure the amount of each language in your GitHub profile
+⚖️ Measure the languages weight in your GitHub profile
