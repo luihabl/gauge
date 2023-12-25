@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"text/tabwriter"
 
 	"github.com/joho/godotenv"
 	"github.com/luihabl/gauge/gauge"
@@ -33,8 +34,13 @@ func main() {
 
 	sortedLangs := gauge.SortMap(langs)
 
+	const padding = 3
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', tabwriter.TabIndent)
+
 	fmt.Printf("\n --- Language weight --- \n\n")
 	for _, l := range sortedLangs {
-		fmt.Printf("%s:\t\t%s\n", l, gauge.ByteCountIEC(int64(langs[l])))
+		fmt.Fprintf(w, "%s\t%s\t\n", l, gauge.ByteCountIEC(int64(langs[l])))
 	}
+
+	w.Flush()
 }

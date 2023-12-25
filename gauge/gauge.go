@@ -6,23 +6,24 @@ import (
 	"log"
 	"os"
 	"sort"
+	"sync"
 
 	"github.com/google/go-github/v57/github"
 )
 
+var lock = sync.RWMutex{}
+
 func SortMap(m map[string]int) []string {
-	// Create slice of key-value pairs
+
 	pairs := make([][2]interface{}, 0, len(m))
 	for k, v := range m {
 		pairs = append(pairs, [2]interface{}{k, v})
 	}
 
-	// Sort slice based on values
 	sort.Slice(pairs, func(i, j int) bool {
 		return pairs[i][1].(int) > pairs[j][1].(int)
 	})
 
-	// Extract sorted keys
 	keys := make([]string, len(pairs))
 	for i, p := range pairs {
 		keys[i] = p[0].(string)
@@ -31,9 +32,28 @@ func SortMap(m map[string]int) []string {
 	return keys
 }
 
+func readRepo(userName string, repoName string, client *github.Client, langs map[string]int, wg *sync.WaitGroup) {
+	rlangs, _, _ := client.Repositories.ListLanguages(context.Background(), userName, repoName)
+
+	lock.Lock()
+	defer lock.Unlock()
+	defer wg.Done()
+
+	fmt.Printf("    🏷️ Reading %s/%s\n", userName, repoName)
+
+	for k, v := range rlangs {
+		langs[k] += v
+	}
+}
+
 func FetchLangs(userName string, token string) map[string]int {
 
-	client := github.NewClient(nil).WithAuthToken(token)
+	client := github.NewClient(nil)
+
+	if len(token) > 0 {
+		client = client.WithAuthToken(token)
+	}
+
 	opt := &github.RepositoryListByUserOptions{Type: "owner"}
 	repos, _, err := client.Repositories.ListByUser(context.Background(), userName, opt)
 
@@ -44,15 +64,14 @@ func FetchLangs(userName string, token string) map[string]int {
 
 	langs := make(map[string]int)
 
+	var wg sync.WaitGroup
+
 	for _, repo := range repos {
-		rlangs, _, _ := client.Repositories.ListLanguages(context.Background(), userName, *repo.Name)
-
-		fmt.Printf("    🏷️ Reading %s/%s\n", userName, *repo.Name)
-
-		for k, v := range rlangs {
-			langs[k] += v
-		}
+		wg.Add(1)
+		go readRepo(userName, *repo.Name, client, langs, &wg)
 	}
+
+	wg.Wait()
 
 	return langs
 }
