@@ -9,3 +9,4 @@ To run it with go from the project's directory, simply do `go run . <github user
 gauge <github username>
 ```
 
+You can set an environment variable `GITHUB_TOKEN` (or in a .env file) with a [personal token](https://github.com/settings/tokens) to access private repositories.
