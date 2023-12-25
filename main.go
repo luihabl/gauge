@@ -27,11 +27,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	fmt.Println("🛜 Fetching information of user", userName)
+
 	langs := gauge.FetchLangs(userName, token)
 
 	sortedLangs := gauge.SortMap(langs)
 
+	fmt.Printf("\n --- Language weight --- \n\n")
 	for _, l := range sortedLangs {
-		fmt.Printf("%s: %d\n", l, langs[l])
+		fmt.Printf("%s:\t\t%s\n", l, gauge.ByteCountIEC(int64(langs[l])))
 	}
 }

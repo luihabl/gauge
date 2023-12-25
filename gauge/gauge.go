@@ -34,7 +34,7 @@ func SortMap(m map[string]int) []string {
 func FetchLangs(userName string, token string) map[string]int {
 
 	client := github.NewClient(nil).WithAuthToken(token)
-	opt := &github.RepositoryListByUserOptions{Type: "all"}
+	opt := &github.RepositoryListByUserOptions{Type: "owner"}
 	repos, _, err := client.Repositories.ListByUser(context.Background(), userName, opt)
 
 	if err != nil {
@@ -47,7 +47,7 @@ func FetchLangs(userName string, token string) map[string]int {
 	for _, repo := range repos {
 		rlangs, _, _ := client.Repositories.ListLanguages(context.Background(), userName, *repo.Name)
 
-		fmt.Printf("Reading %s/%s", repo.Owner, *repo.Name)
+		fmt.Printf("    🏷️ Reading %s/%s\n", userName, *repo.Name)
 
 		for k, v := range rlangs {
 			langs[k] += v
@@ -55,4 +55,18 @@ func FetchLangs(userName string, token string) map[string]int {
 	}
 
 	return langs
+}
+
+func ByteCountIEC(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %ciB",
+		float64(b)/float64(div), "KMGTPE"[exp])
 }
